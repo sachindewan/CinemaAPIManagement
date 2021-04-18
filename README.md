@@ -1,2 +1,2 @@
 # CinemaAPIManagement
-CRUD Operation,Connent Negotiation,Routing,Security,Deployment,Model Validation
+CRUD Operation,Content Negotiation,Routing,Security,Deployment,Model Validation
