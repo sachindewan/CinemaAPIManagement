@@ -27,16 +27,59 @@ namespace CinemaAPI.Controllers
 
         // GET: api/<MovieController>
         [HttpGet]
-        public async Task<IActionResult> Get()
+        public IActionResult Get(string sort,int? pageNumber,int? pageSize)
         {
-            return Ok(await _CinemaDbContext.Movies.ToListAsync());
+            var currentPageNumber = pageNumber ?? 1;
+            var currentPageSize = pageSize ?? 5;
+            var objfromDb = from movie in _CinemaDbContext.Movies
+                            select new
+                            {
+                                MovieName = movie.Name,
+                                MovieDescription = movie.Description,
+                                Rating = movie.Rating,
+                                Genre = movie.Genre
+                            };
+
+            switch (sort)
+            {
+                case "asc":
+                    return Ok(objfromDb.Skip((currentPageNumber - 1)* currentPageSize).Take(currentPageSize).OrderBy(m => m.Rating));
+                case "desc":
+                    return Ok(objfromDb.Skip((currentPageNumber - 1) * currentPageSize).Take(currentPageSize).OrderByDescending(m => m.Rating));
+                default:
+                    return Ok(objfromDb.Skip((currentPageNumber - 1) * currentPageSize).Take(currentPageSize));
+            }
+           
         }
 
         // GET api/<MovieController>/5
         [HttpGet("{id}")]
-        public async Task<IActionResult> Get(int id)
+        public IActionResult Get(int id)
         {
-            return Ok(await _CinemaDbContext.Movies.FindAsync(id));
+            var objfromDb = from movie in _CinemaDbContext.Movies where movie.Id==id
+                            select new
+                            {
+                                MovieName = movie.Name,
+                                MovieDescription = movie.Description,
+                                Rating = movie.Rating,
+                                Genre = movie.Genre
+                            };
+            return Ok(objfromDb);
+        }
+
+        [HttpGet("[action]/{movieName}")]
+        public IActionResult FindMovie(string movieName)
+        {
+            var objfromDb = from movie in _CinemaDbContext.Movies
+                            where movie.Name.StartsWith(movieName)
+                            select new
+                            {
+                                MovieName = movie.Name,
+                                MovieDescription = movie.Description,
+                                Rating = movie.Rating,
+                                Genre = movie.Genre
+                            };
+            return Ok(objfromDb);
         }
 
         // POST api/<MovieController>

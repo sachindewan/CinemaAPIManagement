@@ -1,11 +1,16 @@
 using CinemaAPI.Data;
+using CinemaAPI.Extentions;
 using CinemaAPI.Filters;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.IdentityModel.Tokens;
+using System;
+using System.Text;
 
 namespace CinemaAPI
 {
@@ -26,6 +31,21 @@ namespace CinemaAPI
             {
                 options.UseSqlServer(Configuration.GetConnectionString("CinemaDbConectionString"));
             });
+            services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+               .AddJwtBearer(options =>
+               {
+                   options.TokenValidationParameters = new TokenValidationParameters
+                   {
+                       ValidateIssuer = true,
+                       ValidateAudience = true,
+                       ValidateLifetime = true,
+                       ValidateIssuerSigningKey = true,
+                       ValidIssuer = Configuration["Tokens:Issuer"],
+                       ValidAudience = Configuration["Tokens:Issuer"],
+                       IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Configuration["Tokens:Key"])),
+                       ClockSkew = TimeSpan.Zero,
+                   };
+               });
             services.AddScoped<ModelValidationFilter>();
         }
 
@@ -40,7 +60,8 @@ namespace CinemaAPI
             app.UseRouting();
 
             app.UseAuthorization();
-
+            // global error handler
+            app.UseMiddleware<ErrorHandlerMiddleware>();
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();
